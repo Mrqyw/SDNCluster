@@ -20,8 +20,14 @@ public class ClusterUtil {
      *
      * @return 簇类结果
      */
-    public static ClusterResult KMeansCluster(Graph graph, int k) {
-        List<Integer> oldCenters = getRandomList(k, graph.getNodes().length);
+    public static ClusterResult KMeansCluster(List<Integer> centers,Graph graph, int k) {
+        List<Integer> oldCenters;
+        if(centers==null){
+            oldCenters = getRandomList(k, graph.getNodes().length);
+        }else{
+            oldCenters = centers;
+        }
+
         Map<Integer, List<Node>> map = distributeNodes(oldCenters, graph.getNodes(), graph.getShortestEdges());
         List<Integer> newCenters = null;
         do {
@@ -34,7 +40,7 @@ public class ClusterUtil {
     }
 
     /**
-     * K-means++
+     * Optimized K-means
      * 1.找出整体聚类中心
      * 2.找到离现有的聚类中心最远的点作为下一个簇类中心
      * 3.重新分配节点，并重新计算新的中心
@@ -42,29 +48,20 @@ public class ClusterUtil {
      *
      * @return 簇类结果
      */
-    public static ClusterResult KMeansPPCluster(Graph graph, int k) {
+    public static ClusterResult optimizedKMeansCluster(Graph graph, int k) {
         Map<Integer,List<Node>> map = new HashMap<Integer, List<Node>>();
         List<Node> nodes = new ArrayList<Node>();
         Collections.addAll(nodes,graph.getNodes());
         map.put(0,nodes);
         List<Integer> intList= reCalCenter(map,graph.getShortestEdges());
         System.out.println(intList.get(0));
-        ClusterResult initialKMeans = KMeansCluster(graph, 1);
-        Set<Integer> initialSet = initialKMeans.getNodeMap().keySet();
-        System.out.println("check:" + initialSet.size());
-        int initialCenter = 0;
-        for (Integer i : initialSet) {
-            initialCenter = i;
-            System.out.println(i);
-        }
         List<Integer> nodeIds = new ArrayList<Integer>();
         nodeIds.add(intList.get(0));
         while(nodeIds.size()<k){
             nodeIds = getNextCenter(nodeIds,graph.getNodes(),graph.getShortestEdges());
-            map = distributeNodes(nodeIds,graph.getNodes(),graph.getShortestEdges());
-            nodeIds = reCalCenter(map,graph.getShortestEdges());
+            ClusterResult clusterResult = KMeansCluster(nodeIds,graph,nodeIds.size());
+            map = clusterResult.getNodeMap();
         }
-//        map = distributeNodes(nodes,graph.getNodes(),graph.getShortestEdges());
         double maxDistance = getMaxDistance(map, graph.getShortestEdges());
         return new ClusterResult(map, maxDistance);
     }
@@ -186,8 +183,10 @@ public class ClusterUtil {
             } else {
                 int tmpCenter = centers.get(0);
                 double tmpDistance = shortestPathLength[tmpCenter][node.getId()];
+
                 for (int i = 1; i < centers.size(); i++) {
                     if (shortestPathLength[centers.get(i)][node.getId()] < tmpDistance) {
+                        tmpDistance= shortestPathLength[centers.get(i)][node.getId()];
                         tmpCenter = centers.get(i);
                     }
                 }
