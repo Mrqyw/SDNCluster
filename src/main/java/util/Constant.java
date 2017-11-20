@@ -8,7 +8,7 @@ package util;
 public class Constant {
     public static final String GML_NODE_STRING = "node";
     public static final String GML_NODE_ID_STRING = "id";
-    public static final String GML_NODE_COUNTRY_STRING = "Country";
+    public static final String GML_NODE_CITY_STRING = "label";
     public static final String GML_NODE_LONGITUDE_STRING = "Longitude";
     public static final String GML_NODE_LATITUDE_STRING = "Latitude";
 

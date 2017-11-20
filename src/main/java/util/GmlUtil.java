@@ -43,8 +43,8 @@ public class GmlUtil {
                             newNode.setId(Integer.parseInt(lineString.split(Constant.SPACE_STRING)[1]));
                             continue;
                         }
-                        if (lineString.contains(Constant.GML_NODE_COUNTRY_STRING)){
-                            newNode.setCountry(lineString.split(Constant.SPACE_STRING)[1]);
+                        if (lineString.contains(Constant.GML_NODE_CITY_STRING)){
+                            newNode.setCity(lineString.split(Constant.SPACE_STRING)[1]);
                             continue;
                         }
                         if (lineString.contains(Constant.GML_NODE_LONGITUDE_STRING)){

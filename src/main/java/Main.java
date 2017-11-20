@@ -19,25 +19,41 @@ public class Main {
 
         Graph graph = GmlUtil.converseGmlFile(dataSetBasePath+gmlPath);
         double maxDistance = 0;
-        int sum = 0;
+        double minDistance = Integer.MAX_VALUE;
+        double sum = 0;
         for (int i=1;i<100;i++){
-            ClusterResult clusterResult = ClusterUtil.KMeansCluster(null,graph,5);
+            ClusterResult clusterResult = ClusterUtil.KMeansCluster(graph,5);
             sum +=clusterResult.getMaxDistance();
             if (clusterResult.getMaxDistance()>maxDistance){
                 maxDistance = clusterResult.getMaxDistance();
             }
+            if (clusterResult.getMaxDistance()<maxDistance){
+                minDistance = clusterResult.getMaxDistance();
+            }
         }
         System.out.println(maxDistance);
-        System.out.println(sum/100);
+        System.out.println(minDistance);
+        System.out.println("K-means:"+sum/100);
         ClusterResult clusterResult = ClusterUtil.optimizedKMeansCluster(graph,5);
-        System.out.println(clusterResult.getMaxDistance());
+        printResult(clusterResult,"Optimized K-means");
+        clusterResult = ClusterUtil.KStarMeansCluster(graph,5,15);
+        printResult(clusterResult,"kStar");
+
+    }
+
+    private static void printResult(ClusterResult clusterResult, String method){
+        System.out.println();
+        System.out.println("----------------------------"+method+"--------------------------------------");
+        System.out.println("MaxDistance:"+clusterResult.getMaxDistance());
         for (Integer i:clusterResult.getNodeMap().keySet()){
             System.out.print("cluster:"+i+":");
             for (Node node:clusterResult.getNodeMap().get(i)){
-                System.out.print(node.getId()+",");
+                System.out.print(node.getId()+"-"+node.getCity()+",");
             }
             System.out.println();
         }
+        System.out.println("------------------------------------------------------------------------------");
+        System.out.println();
     }
 
 }

@@ -5,16 +5,16 @@ package model;
  */
 public class Node {
     private int id;
-    private String country;
+    private String city;
     private double longitude;
     private double latitude;
 
     public Node() {
     }
 
-    public Node(int id, String country, double longitude, double latitude) {
+    public Node(int id, String city, double longitude, double latitude) {
         this.id = id;
-        this.country = country;
+        this.city = city;
         this.longitude = longitude;
         this.latitude = latitude;
     }
@@ -27,12 +27,12 @@ public class Node {
         this.id = id;
     }
 
-    public String getCountry() {
-        return country;
+    public String getCity() {
+        return city;
     }
 
-    public void setCountry(String country) {
-        this.country = country;
+    public void setCity(String city) {
+        this.city = city;
     }
 
     public double getLongitude() {
@@ -55,7 +55,7 @@ public class Node {
     public String toString() {
         return "Node{" +
                 "id=" + id +
-                ", country='" + country + '\'' +
+                ", city='" + city + '\'' +
                 ", longitude=" + longitude +
                 ", latitude=" + latitude +
                 '}';
