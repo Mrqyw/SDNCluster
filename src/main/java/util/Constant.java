@@ -6,6 +6,8 @@ package util;
  * @date 22:18 2017/11/14
  */
 public class Constant {
+    public static final boolean DEBUG = false;
+
     public static final String GML_NODE_STRING = "node";
     public static final String GML_NODE_ID_STRING = "id";
     public static final String GML_NODE_CITY_STRING = "label";
