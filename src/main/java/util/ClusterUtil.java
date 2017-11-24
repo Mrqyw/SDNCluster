@@ -49,27 +49,6 @@ public class ClusterUtil {
     }
 
     /**
-     * 1.先随机找到kStar个初始点，并完成分配与更新簇类中心
-     * 2.找出最临近的两个簇类，并完成合并。
-     * 3.重新分配与更新簇类中心。
-     * 4.重复第二三步直到簇个数只有k个为止。
-     * @param graph
-     * @param k
-     * @param kStar
-     * @return
-     */
-    public static ClusterResult KStarMeansCluster(Graph graph, int k, int kStar) {
-        List<Integer> initialCenter = getRandomList(kStar,graph.getNodes().length);
-        Map<Integer, List<Node>> map = distributeNodes(initialCenter, graph.getNodes(), graph.getShortestEdges());
-        while(map.size()>k){
-            map = mergeClusters(map,graph.getShortestEdges());
-            map = distributeNodes(new ArrayList<Integer>(map.keySet()),graph.getNodes(),graph.getShortestEdges());
-        }
-        double maxDistance = getMaxDistance(map, graph.getShortestEdges());
-        return new ClusterResult(map, maxDistance);
-    }
-
-    /**
      * K-means基础类
      * 1.随机选取节点，作为节点中心
      * 2.分配节点到不同的簇类
@@ -101,16 +80,48 @@ public class ClusterUtil {
     }
 
     /**
+     * 1.先随机找到kStar个初始点，并完成分配与更新簇类中心
+     * 2.找出最临近的两个簇类，并完成合并。
+     * 3.重新分配与更新簇类中心。
+     * 4.重复第二三步直到簇个数只有k个为止。
+     * @param graph
+     * @param k
+     * @param kStar
+     * @return
+     */
+    public static ClusterResult KStarMeansCluster(Graph graph, int k, int kStar) {
+        ClusterResult clusterResult = KMeansBaseCluster(null,graph,kStar);
+        Map<Integer, List<Node>> map = clusterResult.getNodeMap();
+        System.out.println("-----------------initial Map---------------------");
+        printMap(map);
+        System.out.println("-------------------------------------------------");
+        while(map.size()>k){
+            map = mergeClusters(map,graph.getShortestEdges());
+            System.out.println("-----------------merge Map---------------------");
+            printMap(map);
+            System.out.println("-------------------------------------------------");
+            clusterResult = KMeansBaseCluster(new ArrayList<Integer>(map.keySet()),graph,map.size());
+            map = clusterResult.getNodeMap();
+            System.out.println("-----------------after merge Map---------------------");
+            printMap(map);
+            System.out.println("-------------------------------------------------");
+        }
+        double maxDistance = getMaxDistance(map, graph.getShortestEdges());
+        return new ClusterResult(map, maxDistance);
+    }
+
+    /**
      * 合并两个最近簇
      * @param map
      * @param shortestPathLength
      * @return
      */
     private static Map<Integer,List<Node>> mergeClusters(Map<Integer,List<Node>> map,double[][] shortestPathLength){
-        int[] shortInt = new int[2];
+        int[] closetCenters = new int[2];
         Set<Integer> centerSets = map.keySet();
         Integer[] centers = centerSets.toArray(new Integer[centerSets.size()]);
-        double minDistance = Integer.MAX_VALUE;
+        //找出簇类中心最近的两个簇
+/*        double minDistance = Integer.MAX_VALUE;
         for (int i=0;i<centers.length;i++){
             for (int j=0;j<centers.length;j++){
                 if (i==j){
@@ -118,37 +129,39 @@ public class ClusterUtil {
                 }
                 if (shortestPathLength[i][j]<minDistance){
                     minDistance = shortestPathLength[i][j];
-                    shortInt[0] = centers[i];
-                    shortInt[1] = centers[j];
+                    closetCenters[0] = centers[i];
+                    closetCenters[1] = centers[j];
                 }
             }
-        }
-        List<Node> tmp = map.get(shortInt[0]);
-        if (map.get(shortInt[1])!=null){
-            tmp.addAll(map.get(shortInt[1]));
-            map.remove(shortInt[1]);
-        }
-        int center = shortInt[0];
-        double distance = Integer.MAX_VALUE;
-        List<Node> mergeNodes = map.get(shortInt[0]);
-        for (int i = 0; i < mergeNodes.size(); i++) {
-            double subMaxDistance = 0;
-            for (int j = 0; j < mergeNodes.size(); j++) {
-                if (i == j) {
+        }*/
+        //根据簇类点最相近来合并
+        double minDistance = Integer.MAX_VALUE;
+        for (int i=0;i<centers.length;i++){
+            List<Node> nodes = map.get(centers[i]);
+            for (int j = 0;j<centers.length;j++){
+                if (i==j){
                     continue;
                 }
-                double tmpDistance = shortestPathLength[mergeNodes.get(i).getId()][mergeNodes.get(j).getId()];
-                if (tmpDistance > subMaxDistance) {
-                    subMaxDistance = tmpDistance;
+                List<Node> otherNodes = map.get(centers[j]);
+                for (Node node:nodes){
+                    for(Node otherNode:otherNodes){
+                        if (shortestPathLength[node.getId()][otherNode.getId()]<minDistance){
+                            minDistance = shortestPathLength[node.getId()][otherNode.getId()];
+                            closetCenters[0] = centers[i];
+                            closetCenters[1] = centers[j];
+                        }
+                    }
                 }
             }
-            if (subMaxDistance < distance) {
-                distance = subMaxDistance;
-                center = mergeNodes.get(i).getId();
-            }
-            map.put(center,map.get(shortInt[0]));
-            map.remove(shortInt[0]);
         }
+
+        System.out.println("merge centers:"+closetCenters[0]+","+closetCenters[1]);
+        map.get(closetCenters[0]).addAll(map.remove(closetCenters[1]));
+        int newCenter = closetCenters[0];
+        List<Node> mergeNodes = map.get(closetCenters[0]);
+        map.remove(closetCenters[0]);
+        newCenter = reCalCenter(newCenter,mergeNodes,shortestPathLength);
+        map.put(newCenter,mergeNodes);
         return map;
     }
 
@@ -239,19 +252,10 @@ public class ClusterUtil {
         return true;
     }
 
-    /**
-     * 重新计算新的簇类中心点
-0     * @param map
-     * @param shortestPathLength
-     * @return
-     */
-    private static List<Integer> reCalCenter(Map<Integer, List<Node>> map, double[][] shortestPathLength) {
-        List<Integer> newCenters = new ArrayList<Integer>();
-        for (Integer oldCenter : map.keySet()) {
-            List<Node> nodes = map.get(oldCenter);
-            int center = oldCenter;
-            double distance = Integer.MAX_VALUE;
-            for (int i = 0; i < nodes.size(); i++) {
+    private static Integer reCalCenter(int oldCenter, List<Node> nodes, double[][] shortestPathLength){
+        int center = oldCenter;
+        double distance = Integer.MAX_VALUE;
+        for (int i = 0; i < nodes.size(); i++) {
 /*                double subMaxDistance = 0;
                 //根据最大的距离求中心
                 for (int j = 0; j < nodes.size(); j++) {
@@ -267,20 +271,33 @@ public class ClusterUtil {
                     distance = subMaxDistance;
                     center = nodes.get(i).getId();
                 }*/
-                //根据距离总和求中心，既求出来的中心为簇类离其他点总和最近的。
-                double sumDistance = 0;
-                for (int j=0;j<nodes.size();j++){
-                    if (i==j){
-                        continue;
-                    }
-                    sumDistance+= shortestPathLength[nodes.get(i).getId()][nodes.get(j).getId()];
+            //根据距离总和求中心，既求出来的中心为簇类离其他点总和最近的。
+            double sumDistance = 0;
+            for (int j=0;j<nodes.size();j++){
+                if (i==j){
+                    continue;
                 }
-                if (sumDistance < distance) {
-                    distance = sumDistance;
-                    center = nodes.get(i).getId();
-                }
+                sumDistance+= shortestPathLength[nodes.get(i).getId()][nodes.get(j).getId()];
             }
-            newCenters.add(center);
+            if (sumDistance < distance) {
+                distance = sumDistance;
+                center = nodes.get(i).getId();
+            }
+        }
+        return center;
+    }
+
+    /**
+     * 重新计算新的簇类中心点
+0     * @param map
+     * @param shortestPathLength
+     * @return
+     */
+    private static List<Integer> reCalCenter(Map<Integer, List<Node>> map, double[][] shortestPathLength) {
+        List<Integer> newCenters = new ArrayList<Integer>();
+        for (Integer oldCenter : map.keySet()) {
+            List<Node> nodes = map.get(oldCenter);
+            newCenters.add(reCalCenter(oldCenter,nodes,shortestPathLength));
         }
         return newCenters;
     }
@@ -384,12 +401,32 @@ public class ClusterUtil {
         return map;
     }
 
+    /**
+     * 打印簇类中心ID
+     * @param integers
+     */
     private static void printList(List<Integer> integers){
         if (Constant.DEBUG){
             for (Integer i:integers){
                 System.out.print(i+",");
             }
             System.out.println();
+        }
+    }
+
+    /**
+     * 打印Map:含簇类中心与对应的簇点
+     * @param map
+     */
+    private static void printMap(Map<Integer,List<Node>> map){
+        if (Constant.DEBUG){
+            for (Integer i:map.keySet()){
+                System.out.print("cluster:"+i+":");
+                for (Node node:map.get(i)){
+                    System.out.print(node.getId()+"-"+node.getCity()+",");
+                }
+                System.out.println();
+            }
         }
     }
 }

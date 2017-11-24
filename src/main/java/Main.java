@@ -21,15 +21,42 @@ public class Main {
         Graph graph = GmlUtil.converseGmlFile(dataSetBasePath+gmlPath);
         //-----------------------------------------------------------------------------
 
-        //--------------------------K-means-------------------------------------------
-
+        ClusterResult clusterResult;
+/*        //--------------------------K-means-------------------------------------------
         double maxDistance = 0;
         double minDistance = Integer.MAX_VALUE;
         double sum = 0;
         System.out.println();
         System.out.println("----------------------------K-means--------------------------------------");
-        for (int i=1; i<100; i++){
-            ClusterResult clusterResult = ClusterUtil.KMeansCluster(graph,6);
+        for (int i=1; i<10000; i++){
+            clusterResult = ClusterUtil.KMeansCluster(graph,6);
+            sum +=clusterResult.getMaxDistance();
+            if (clusterResult.getMaxDistance()>maxDistance){
+                maxDistance = clusterResult.getMaxDistance();
+            }
+            if (clusterResult.getMaxDistance()<minDistance){
+                minDistance = clusterResult.getMaxDistance();
+            }
+        }
+        System.out.println("maxDistance in 100 times:"+maxDistance);
+        System.out.println("minDistance in 100 times:"+minDistance);
+        System.out.println("average maxDistance in 100 times:"+sum/10000);
+        System.out.println("-----------------------------------------------------------------------------");
+        System.out.println();
+        //--------------------------------------------------------------------------
+
+        //-------------------------Optimized K-means----------------------------------
+        clusterResult = ClusterUtil.optimizedKMeansCluster(graph,6);
+        printResult(clusterResult,"Optimized K-means");
+        //----------------------------------------------------------------------------*/
+
+        //--------------------------KStar-------------------------------------------
+        double maxDistance = 0;
+        double minDistance = Integer.MAX_VALUE;
+        double sum = 0;
+        for (int i=0;i<100;i++){
+            clusterResult = ClusterUtil.KStarMeansCluster(graph,5,10);
+            printResult(clusterResult,"kStar");
             sum +=clusterResult.getMaxDistance();
             if (clusterResult.getMaxDistance()>maxDistance){
                 maxDistance = clusterResult.getMaxDistance();
@@ -41,20 +68,9 @@ public class Main {
         System.out.println("maxDistance in 100 times:"+maxDistance);
         System.out.println("minDistance in 100 times:"+minDistance);
         System.out.println("average maxDistance in 100 times:"+sum/100);
-        System.out.println("-----------------------------------------------------------------------------");
         System.out.println();
+
         //--------------------------------------------------------------------------
-
-        //-------------------------Optimized K-means----------------------------------
-        ClusterResult clusterResult = ClusterUtil.optimizedKMeansCluster(graph,6);
-        printResult(clusterResult,"Optimized K-means");
-        //----------------------------------------------------------------------------
-
-//        //--------------------------KStar-------------------------------------------
-//        clusterResult = ClusterUtil.KStarMeansCluster(graph,5,15);
-//        printResult(clusterResult,"kStar");
-//        //--------------------------------------------------------------------------
-
     }
 
     private static void printResult(ClusterResult clusterResult, String method){
