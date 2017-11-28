@@ -86,25 +86,16 @@ public class ClusterUtil {
      * 4.重复第二三步直到簇个数只有k个为止。
      * @param graph
      * @param k
-     * @param kStar
+     * @param kStar 当KStar值与图中节点数量一样，则退化成层次簇类方法。
      * @return
      */
     public static ClusterResult KStarMeansCluster(Graph graph, int k, int kStar) {
         ClusterResult clusterResult = KMeansBaseCluster(null,graph,kStar);
         Map<Integer, List<Node>> map = clusterResult.getNodeMap();
-        System.out.println("-----------------initial Map---------------------");
-        printMap(map);
-        System.out.println("-------------------------------------------------");
         while(map.size()>k){
             map = mergeClusters(map,graph.getShortestEdges());
-            System.out.println("-----------------merge Map---------------------");
-            printMap(map);
-            System.out.println("-------------------------------------------------");
             clusterResult = KMeansBaseCluster(new ArrayList<Integer>(map.keySet()),graph,map.size());
             map = clusterResult.getNodeMap();
-            System.out.println("-----------------after merge Map---------------------");
-            printMap(map);
-            System.out.println("-------------------------------------------------");
         }
         double maxDistance = getMaxDistance(map, graph.getShortestEdges());
         return new ClusterResult(map, maxDistance);
@@ -121,21 +112,21 @@ public class ClusterUtil {
         Set<Integer> centerSets = map.keySet();
         Integer[] centers = centerSets.toArray(new Integer[centerSets.size()]);
         //找出簇类中心最近的两个簇
-/*        double minDistance = Integer.MAX_VALUE;
+        double minDistance = Integer.MAX_VALUE;
         for (int i=0;i<centers.length;i++){
             for (int j=0;j<centers.length;j++){
                 if (i==j){
                     continue;
                 }
-                if (shortestPathLength[i][j]<minDistance){
-                    minDistance = shortestPathLength[i][j];
+                if (shortestPathLength[centers[i]][centers[j]]<minDistance){
+                    minDistance = shortestPathLength[centers[i]][centers[j]];
                     closetCenters[0] = centers[i];
                     closetCenters[1] = centers[j];
                 }
             }
-        }*/
+        }
         //根据簇类点最相近来合并
-        double minDistance = Integer.MAX_VALUE;
+/*        double minDistance = Integer.MAX_VALUE;
         for (int i=0;i<centers.length;i++){
             List<Node> nodes = map.get(centers[i]);
             for (int j = 0;j<centers.length;j++){
@@ -153,9 +144,9 @@ public class ClusterUtil {
                     }
                 }
             }
-        }
+        }*/
 
-        System.out.println("merge centers:"+closetCenters[0]+","+closetCenters[1]);
+//        System.out.println("merge centers:"+closetCenters[0]+","+closetCenters[1]);
         map.get(closetCenters[0]).addAll(map.remove(closetCenters[1]));
         int newCenter = closetCenters[0];
         List<Node> mergeNodes = map.get(closetCenters[0]);

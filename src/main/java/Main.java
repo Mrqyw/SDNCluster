@@ -29,7 +29,7 @@ public class Main {
         System.out.println();
         System.out.println("----------------------------K-means--------------------------------------");
         for (int i=1; i<10000; i++){
-            clusterResult = ClusterUtil.KMeansCluster(graph,6);
+            clusterResult = ClusterUtil.KMeansCluster(graph,5);
             sum +=clusterResult.getMaxDistance();
             if (clusterResult.getMaxDistance()>maxDistance){
                 maxDistance = clusterResult.getMaxDistance();
@@ -43,21 +43,25 @@ public class Main {
         System.out.println("average maxDistance in 100 times:"+sum/10000);
         System.out.println("-----------------------------------------------------------------------------");
         System.out.println();
-        //--------------------------------------------------------------------------
+        //--------------------------------------------------------------------------*/
 
         //-------------------------Optimized K-means----------------------------------
-        clusterResult = ClusterUtil.optimizedKMeansCluster(graph,6);
+        long beginTime = System.currentTimeMillis();
+        clusterResult = ClusterUtil.optimizedKMeansCluster(graph,5);
         printResult(clusterResult,"Optimized K-means");
-        //----------------------------------------------------------------------------*/
+        System.out.println("OptimizedKMeans Spent:"+(System.currentTimeMillis()-beginTime));
+        //----------------------------------------------------------------------------
 
         //--------------------------KStar-------------------------------------------
-        double maxDistance = 0;
+/*        double maxDistance = 0;
         double minDistance = Integer.MAX_VALUE;
         double sum = 0;
-        for (int i=0;i<100;i++){
-            clusterResult = ClusterUtil.KStarMeansCluster(graph,5,10);
-            printResult(clusterResult,"kStar");
-            sum +=clusterResult.getMaxDistance();
+        for (int i=0;i<100;i++){*/
+        beginTime = System.currentTimeMillis();
+        clusterResult = ClusterUtil.KStarMeansCluster(graph,5,graph.getNodes().length);
+        printResult(clusterResult,"kStar");
+        System.out.println("kStar Spent:"+(System.currentTimeMillis()-beginTime));
+/*            sum +=clusterResult.getMaxDistance();
             if (clusterResult.getMaxDistance()>maxDistance){
                 maxDistance = clusterResult.getMaxDistance();
             }
@@ -68,7 +72,7 @@ public class Main {
         System.out.println("maxDistance in 100 times:"+maxDistance);
         System.out.println("minDistance in 100 times:"+minDistance);
         System.out.println("average maxDistance in 100 times:"+sum/100);
-        System.out.println();
+        System.out.println();*/
 
         //--------------------------------------------------------------------------
     }
