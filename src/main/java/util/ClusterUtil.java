@@ -93,7 +93,7 @@ public class ClusterUtil {
         ClusterResult clusterResult = KMeansBaseCluster(null,graph,kStar);
         Map<Integer, List<Node>> map = clusterResult.getNodeMap();
         while(map.size()>k){
-            map = mergeClusters(map,graph.getShortestEdges());
+            map = mergeClusters(map,graph,k);
             clusterResult = KMeansBaseCluster(new ArrayList<Integer>(map.keySet()),graph,map.size());
             map = clusterResult.getNodeMap();
         }
@@ -102,31 +102,18 @@ public class ClusterUtil {
     }
 
     /**
-     * 合并两个最近簇
+     * 根据两个簇间最近的距离
      * @param map
-     * @param shortestPathLength
+     * @param graph
      * @return
      */
-    private static Map<Integer,List<Node>> mergeClusters(Map<Integer,List<Node>> map,double[][] shortestPathLength){
+    private static int[] mergeRuleByDistanceOfClosestNode(Map<Integer,List<Node>> map,Graph graph){
+        double[][] shortestPathLength = graph.getShortestEdges();
         int[] closetCenters = new int[2];
         Set<Integer> centerSets = map.keySet();
         Integer[] centers = centerSets.toArray(new Integer[centerSets.size()]);
-        //找出簇类中心最近的两个簇
-        double minDistance = Integer.MAX_VALUE;
-        for (int i=0;i<centers.length;i++){
-            for (int j=0;j<centers.length;j++){
-                if (i==j){
-                    continue;
-                }
-                if (shortestPathLength[centers[i]][centers[j]]<minDistance){
-                    minDistance = shortestPathLength[centers[i]][centers[j]];
-                    closetCenters[0] = centers[i];
-                    closetCenters[1] = centers[j];
-                }
-            }
-        }
         //根据簇类点最相近来合并
-/*        double minDistance = Integer.MAX_VALUE;
+        double minDistance = Integer.MAX_VALUE;
         for (int i=0;i<centers.length;i++){
             List<Node> nodes = map.get(centers[i]);
             for (int j = 0;j<centers.length;j++){
@@ -144,9 +131,68 @@ public class ClusterUtil {
                     }
                 }
             }
-        }*/
+        }
+        return closetCenters;
+    }
 
-//        System.out.println("merge centers:"+closetCenters[0]+","+closetCenters[1]);
+    /**
+     * 根据簇类中心间的距离
+     * @param map
+     * @param graph
+     * @return
+     */
+    private static int[] mergeRuleByDistanceOfCenters(Map<Integer,List<Node>> map,Graph graph){
+        double[][] shortestPathLength = graph.getShortestEdges();
+        int[] closetCenters = new int[2];
+        Set<Integer> centerSets = map.keySet();
+        Integer[] centers = centerSets.toArray(new Integer[centerSets.size()]);
+        double minDistance = Integer.MAX_VALUE;
+        for (int i=0;i<centers.length;i++){
+            for (int j=0;j<centers.length;j++){
+                if (i==j){
+                    continue;
+                }
+                if (shortestPathLength[centers[i]][centers[j]]<minDistance){
+                    minDistance = shortestPathLength[centers[i]][centers[j]];
+                    closetCenters[0] = centers[i];
+                    closetCenters[1] = centers[j];
+                }
+            }
+        }
+        return closetCenters;
+    }
+
+    /**
+     * 根据簇类中心间的距离
+     * @param map
+     * @param graph
+     * @return
+     */
+    private static int[] mergeRuleWithLoadBalance(Map<Integer,List<Node>> map,Graph graph,int targetCluster){
+        double[][] shortestPathLength = graph.getShortestEdges();
+        int[] closetCenters = new int[2];
+        Set<Integer> centerSets = map.keySet();
+        Integer[] centers = centerSets.toArray(new Integer[centerSets.size()]);
+        double minDistance = Integer.MAX_VALUE;
+        for (int i=0;i<centers.length;i++){
+            if (map.get(centers[i]).size()>graph.getNodes().length/targetCluster+1){
+                continue;
+            }
+            for (int j=0;j<centers.length;j++){
+                if (i==j||map.get(centers[j]).size()>graph.getNodes().length/targetCluster+1){
+                    continue;
+                }
+                if (shortestPathLength[centers[i]][centers[j]]<minDistance){
+                    minDistance = shortestPathLength[centers[i]][centers[j]];
+                    closetCenters[0] = centers[i];
+                    closetCenters[1] = centers[j];
+                }
+            }
+        }
+        return closetCenters;
+    }
+
+    private static Map<Integer,List<Node>> merge(Map<Integer,List<Node>> map,double[][] shortestPathLength,int[] closetCenters){
         map.get(closetCenters[0]).addAll(map.remove(closetCenters[1]));
         int newCenter = closetCenters[0];
         List<Node> mergeNodes = map.get(closetCenters[0]);
@@ -154,6 +200,17 @@ public class ClusterUtil {
         newCenter = reCalCenter(newCenter,mergeNodes,shortestPathLength);
         map.put(newCenter,mergeNodes);
         return map;
+    }
+
+    /**
+     * 合并两个最近簇
+     * @param map
+     * @param graph
+     * @return
+     */
+    private static Map<Integer,List<Node>> mergeClusters(Map<Integer,List<Node>> map,Graph graph,int targetCluster){
+        int[] closetCenters = mergeRuleWithLoadBalance(map,graph,targetCluster);
+        return merge(map,graph.getShortestEdges(),closetCenters);
     }
 
     /**
@@ -197,25 +254,28 @@ public class ClusterUtil {
      * @param shortestPathLength 最短路径数组
      * @return
      */
-    private static List<Integer> getNextCenter(List<Integer> presentCenter, Node[] nodes, double[][] shortestPathLength) {
+    private static List<Integer> getNextCenter(List<Integer> presentCenter, Node[] nodes, double[][] shortestPathLength, boolean first) {
         double maxDistance = 0;
         int nextCenter = 0;
-
         for (Node node : nodes) {
             if (isExist(presentCenter,node.getId())){
                 continue;
             }
-            int distance = 0;
+            double distance = 0;
             for (Integer i : presentCenter) {
                 if (node.getId() == i) {
                     continue;
                 }
                 distance += shortestPathLength[i][node.getId()];
             }
+//            distance = shortestPathLength[presentCenter.get(presentCenter.size()-1)][node.getId()];
             if (distance>maxDistance){
                 maxDistance = distance;
                 nextCenter = node.getId();
             }
+        }
+        if (first){
+            presentCenter.clear();
         }
         presentCenter.add(nextCenter);
         return presentCenter;
@@ -321,6 +381,15 @@ public class ClusterUtil {
         return map;
     }
 
+    private static Map<Integer, List<Node>> distributeNodes(List<Integer> centers, Integer[] integers, double[][] shortestPathLength, Node[] nodes) {
+        List<Node> nodeList = new ArrayList<Node>();
+        for (Integer i:integers){
+            nodeList.add(nodes[i]);
+        }
+        Node[] nodeArray = nodeList.toArray(new Node[nodeList.size()]);
+        return distributeNodes(centers,nodeArray,shortestPathLength);
+    }
+
     private static double getMaxDistance(Map<Integer, List<Node>> map, double[][] shortestPathLength) {
         double maxDistance = 0;
         for (Integer center : map.keySet()) {
@@ -386,7 +455,12 @@ public class ClusterUtil {
         Map<Integer, List<Node>> map = new HashMap<Integer, List<Node>>();
         for (Integer i : integers) {
             List<Node> nodes = new ArrayList<Node>();
-            nodes.add(nodeArray[i]);
+            for (Node n:nodeArray){
+                if (n.getId()==i){
+                    nodes.add(n);
+                    break;
+                }
+            }
             map.put(i, nodes);
         }
         return map;
@@ -419,5 +493,103 @@ public class ClusterUtil {
                 System.out.println();
             }
         }
+    }
+
+    /**
+     * HKSBS++（逐步层次聚类方法-结合K-means++）
+     * 1.先按照K-meams++方法选取K个初始点
+     * 2.然后顺序 或 随机（观察是否跟顺序有关，若有关如何避免这种随机性）逐步选取节点
+     * 3.将该节点分配到离其最近的簇中
+     * 4.重新计算新的簇类中心 与分配节点（这样是否会打破之前分配的规则，还是说分配过程中也需要考虑负载与层）
+     * 5.重复2-4步，直至所有节点分配完毕
+     * @param graph
+     * @param k
+     * @return
+     */
+    public static ClusterResult H_KClusterSBS(Graph graph,int k){
+        List<Integer> centerList = new ArrayList<Integer>();
+
+        //根据optimized K-means找出四个初始点
+/*        ClusterResult clusterResult = optimizedKMeansCluster(graph,k);
+        Map<Integer,List<Node>> optimizedKMeansResultMap = clusterResult.getNodeMap();
+        List<Integer> centerList = new ArrayList<Integer>(optimizedKMeansResultMap.keySet());*/
+
+        //随机初始点
+//        List<Integer> centerList = getRandomList(k,graph.getNodes().length);
+
+        //直接根据初始点来选
+        ClusterResult clusterResult = KMeansBaseCluster(null,graph,1);
+        Integer center = new ArrayList<Integer>(clusterResult.getNodeMap().keySet()).get(0);
+        centerList.add(center);
+        centerList = getNextCenter(centerList,graph.getNodes(),graph.getShortestEdges(),true);
+        while (centerList.size()<k){
+            centerList = getNextCenter(centerList,graph.getNodes(),graph.getShortestEdges(),false);
+        }
+
+        Map<Integer,List<Node>> map = initialMap(centerList,graph.getNodes());
+        int iterationTime = graph.getNodes().length-k;
+        List<Integer> currentNodeList = new ArrayList<Integer>(centerList);
+        double[][] shortestPathLength = graph.getShortestEdges();
+        while(iterationTime>0){
+            //顺序取
+            //Integer nextNode = getNextNode(currentNodeList,graph.getNodes());
+            //最短距离取
+            Integer nextNode = getNextNode(currentNodeList,graph.getNodes(),shortestPathLength,centerList);
+            if (nextNode == null){
+                System.err.println("getNext Error");
+                break;
+            }
+            currentNodeList.add(nextNode);
+            int candidateCenter = centerList.get(0);
+            //根据最短距离来进行归类;后续会引入负载、可靠性。
+            double minLength = shortestPathLength[candidateCenter][nextNode];
+            for (Integer i:centerList){
+                double tmpLength = shortestPathLength[i][nextNode];
+                if (tmpLength<minLength){
+                    candidateCenter = i;
+                    minLength = tmpLength;
+                }
+            }
+            map.get(candidateCenter).add(graph.getNodes()[nextNode]);
+
+            centerList = reCalCenter(map,shortestPathLength);
+            map = distributeNodes(centerList,currentNodeList.toArray(new Integer[currentNodeList.size()]),shortestPathLength,graph.getNodes());
+            iterationTime--;
+        }
+        double maxDistance = getMaxDistance(map, graph.getShortestEdges());
+        return new ClusterResult(map, maxDistance);
+    }
+
+    /**
+     * 顺序选取节点
+     * @param currentList
+     * @param nodes
+     * @return
+     */
+    private static Integer getNextNode(List<Integer> currentList, Node[] nodes){
+        for (Node node:nodes){
+            if (!isExist(currentList,node.getId())){
+                return node.getId();
+            }
+        }
+        return null;
+    }
+
+    private static Integer getNextNode(List<Integer> currentList, Node[] nodes, double[][] shortestPathLength,List<Integer> centerList){
+        int nextNodeId = 0;
+        double minLength = Integer.MAX_VALUE;
+        for (Node node:nodes){
+            if (currentList.contains(node.getId())){
+                continue;
+            }else {
+                for (Integer i:centerList){
+                    if (minLength>shortestPathLength[i][node.getId()]){
+                        minLength = shortestPathLength[i][node.getId()];
+                        nextNodeId = node.getId();
+                    }
+                }
+            }
+        }
+        return nextNodeId;
     }
 }

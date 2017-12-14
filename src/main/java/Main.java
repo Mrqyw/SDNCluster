@@ -2,8 +2,10 @@
 import model.ClusterResult;
 import model.Graph;
 import model.Node;
+import util.AverageLatencyUtil;
 import util.ClusterUtil;
 import util.GmlUtil;
+import util.LoadBalanceUtil;
 
 import java.io.IOException;
 
@@ -48,7 +50,7 @@ public class Main {
         //-------------------------Optimized K-means----------------------------------
         long beginTime = System.currentTimeMillis();
         clusterResult = ClusterUtil.optimizedKMeansCluster(graph,5);
-        printResult(clusterResult,"Optimized K-means");
+        printResult(graph,clusterResult,"Optimized K-means");
         System.out.println("OptimizedKMeans Spent:"+(System.currentTimeMillis()-beginTime));
         //----------------------------------------------------------------------------
 
@@ -59,8 +61,13 @@ public class Main {
         for (int i=0;i<100;i++){*/
         beginTime = System.currentTimeMillis();
         clusterResult = ClusterUtil.KStarMeansCluster(graph,5,graph.getNodes().length);
-        printResult(clusterResult,"kStar");
+        printResult(graph,clusterResult,"kStar");
         System.out.println("kStar Spent:"+(System.currentTimeMillis()-beginTime));
+
+        beginTime = System.currentTimeMillis();
+        clusterResult = ClusterUtil.H_KClusterSBS(graph,5);
+        printResult(graph,clusterResult,"H_KClusterSBS");
+        System.out.println("H_KClusterSBS Spent:"+(System.currentTimeMillis()-beginTime));
 /*            sum +=clusterResult.getMaxDistance();
             if (clusterResult.getMaxDistance()>maxDistance){
                 maxDistance = clusterResult.getMaxDistance();
@@ -77,10 +84,12 @@ public class Main {
         //--------------------------------------------------------------------------
     }
 
-    private static void printResult(ClusterResult clusterResult, String method){
+    private static void printResult(Graph graph,ClusterResult clusterResult, String method){
         System.out.println();
         System.out.println("----------------------------"+method+"--------------------------------------");
         System.out.println("MaxDistance:"+clusterResult.getMaxDistance());
+        System.out.println("Average Distance:"+ AverageLatencyUtil.averageDistance(graph,clusterResult.getNodeMap()));
+        System.out.println("SDNS:"+ LoadBalanceUtil.SDNS(graph,clusterResult.getNodeMap()));
         for (Integer i:clusterResult.getNodeMap().keySet()){
             System.out.print("cluster:"+i+":");
             for (Node node:clusterResult.getNodeMap().get(i)){
