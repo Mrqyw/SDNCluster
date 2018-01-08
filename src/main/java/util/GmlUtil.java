@@ -1,6 +1,7 @@
 package util;
 
 
+import model.Floyd;
 import model.Graph;
 import model.Node;
 
@@ -90,7 +91,9 @@ public class GmlUtil {
                 break;
             }
         }
-        graph.setShortestEdges(DistanceUtil.getShortestPath(graph.getEdges()));
+        Floyd floyd = new Floyd(graph.getEdges());
+        graph.setShortestEdges(floyd.getPathMatrix());
+        graph.setShortestEdgesHop(floyd.getHopMatrix());
         return graph;
     }
 

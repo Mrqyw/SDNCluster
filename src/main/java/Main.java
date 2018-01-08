@@ -2,10 +2,11 @@
 import model.ClusterResult;
 import model.Graph;
 import model.Node;
-import util.AverageLatencyUtil;
+import util.metric.AverageLatencyUtil;
 import util.ClusterUtil;
 import util.GmlUtil;
-import util.LoadBalanceUtil;
+import util.metric.LoadBalanceUtil;
+import util.metric.ReliabilityUtil;
 
 import java.io.IOException;
 
@@ -87,9 +88,11 @@ public class Main {
     private static void printResult(Graph graph,ClusterResult clusterResult, String method){
         System.out.println();
         System.out.println("----------------------------"+method+"--------------------------------------");
-        System.out.println("MaxDistance:"+clusterResult.getMaxDistance());
-        System.out.println("Average Distance:"+ AverageLatencyUtil.averageDistance(graph,clusterResult.getNodeMap()));
-        System.out.println("SDNS:"+ LoadBalanceUtil.SDNS(graph,clusterResult.getNodeMap()));
+        System.out.print("Distance:("+"MaxDistance:"+clusterResult.getMaxDistance()+",");
+        System.out.println("Average Distance:"+ AverageLatencyUtil.averageDistance(graph,clusterResult.getNodeMap())+")");
+        System.out.print("Load:("+"SDNS:"+ LoadBalanceUtil.SDNS(graph,clusterResult.getNodeMap())+",");
+        System.out.println("MaxLoadDifferent:"+LoadBalanceUtil.maxLoadDifferent(clusterResult.getNodeMap())+")");
+        System.out.println("Reliability:"+ ReliabilityUtil.disConnectSwitchesSum(graph,clusterResult.getNodeMap()));
         for (Integer i:clusterResult.getNodeMap().keySet()){
             System.out.print("cluster:"+i+":");
             for (Node node:clusterResult.getNodeMap().get(i)){

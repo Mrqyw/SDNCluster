@@ -18,6 +18,8 @@ public class Graph {
      */
     private double[][] shortestEdges;
 
+    private int[][] shortestEdgesHop;
+
     public Node[] getNodes() {
         return nodes;
     }
@@ -40,6 +42,14 @@ public class Graph {
 
     public void setShortestEdges(double[][] shortestEdges) {
         this.shortestEdges = shortestEdges;
+    }
+
+    public int[][] getShortestEdgesHop() {
+        return shortestEdgesHop;
+    }
+
+    public void setShortestEdgesHop(int[][] shortestEdgesHop) {
+        this.shortestEdgesHop = shortestEdgesHop;
     }
 
     /**

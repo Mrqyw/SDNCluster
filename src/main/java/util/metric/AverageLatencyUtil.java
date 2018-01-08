@@ -1,4 +1,4 @@
-package util;
+package util.metric;
 
 import model.Graph;
 import model.Node;

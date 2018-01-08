@@ -38,12 +38,15 @@ public class DistanceUtil {
                 * Math.cos(lat2) * sb2 * sb2));
         return d;
     }
+/*
 
-    /**
+    */
+/**
      * 返回edge数组对应的最短路径数组
      * @param edges
      * @return
-     */
+     *//*
+
     public static double[][] getShortestPath(double[][] edges){
         double[][] sp = new double[edges.length][edges.length];
         for (int i = 0;i<edges.length;i++){
@@ -52,22 +55,26 @@ public class DistanceUtil {
         return sp;
     }
 
-    /**
+    */
+/**
      * 获取最短路径对应的跳数，用于考虑可靠性时使用
      * @param edges
      * @return
-     */
+     *//*
+
     public static int[][] getShortestPathRelHop(double[][] edges){
         return null;
     }
 
-    /**
+    */
+/**
      * 返回一个点 到其他所有点的所有距离
      * @param graph
      * @param n
      * @param u
      * @return
-     */
+     *//*
+
     public static double[] dijkstra(double[][] graph,int n,int u){
         double dist[]=new double[n];
         boolean s[]=new boolean[n];
@@ -105,6 +112,7 @@ public class DistanceUtil {
         return dist;
     }
 
+*/
 
 
 }

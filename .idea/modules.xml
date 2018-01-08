@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/SDNCluster.iml" filepath="$PROJECT_DIR$/SDNCluster.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SDNStaticDeployment.iml" filepath="$PROJECT_DIR$/SDNStaticDeployment.iml" />
     </modules>
   </component>
 </project>

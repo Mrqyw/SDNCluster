@@ -1,4 +1,4 @@
-package util;
+package util.metric;
 
 import model.Graph;
 import model.Node;
@@ -26,5 +26,24 @@ public class LoadBalanceUtil {
             sum+=Math.pow(map.get(center).size()-averageSize,2);
         }
         return Math.sqrt(sum/clusterSize);
+    }
+
+    /**
+     * 最大负载-最小负载
+     * @param map
+     * @return
+     */
+    public static int maxLoadDifferent(Map<Integer,List<Node>> map){
+        int max = Integer.MIN_VALUE;
+        int min = Integer.MAX_VALUE;
+        for (Integer center:map.keySet()){
+            if (map.get(center).size()>max){
+                max = map.get(center).size();
+            }
+            if (map.get(center).size()<min){
+                min = map.get(center).size();
+            }
+        }
+        return max-min;
     }
 }
